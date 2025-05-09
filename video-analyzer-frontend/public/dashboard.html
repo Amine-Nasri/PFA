@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de bord - Violence Detection</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --text-color: #333;
+            --light-gray: #f5f5f5;
+            --medium-gray: #e0e0e0;
+            --dark-gray: #95a5a6;
+        }
+
+        body {
+            background-color: var(--light-gray);
+            color: var(--text-color);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--accent-color);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .welcome-section {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .welcome-title {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .dashboard-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-title {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.6rem 1.5rem;
+            border-radius: 30px;
+            font-weight: 600;
+            text-decoration: none;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .recent-analyses {
+            margin-top: 2rem;
+        }
+
+        .analysis-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .analysis-item:last-child {
+            border-bottom: none;
+        }
+
+        .analysis-date {
+            color: var(--dark-gray);
+            font-size: 0.9rem;
+        }
+
+        .analysis-result {
+            font-weight: 600;
+        }
+
+        .high-violence {
+            color: #e74c3c;
+        }
+
+        .medium-violence {
+            color: #f39c12;
+        }
+
+        .low-violence {
+            color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="logo">Violence<span>Detection</span></a>
+        <div class="user-menu">
+            <div class="user-avatar" id="user-avatar">JD</div>
+            <button class="logout-btn" id="logout-btn">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <section class="welcome-section">
+            <h1 class="welcome-title">Bienvenue, <span id="user-fullname">Utilisateur</span></h1>
+            <p>Vous pouvez commencer une nouvelle analyse ou consulter vos analyses précédentes.</p>
+            <a href="/" class="btn" style="margin-top: 1rem;">Nouvelle analyse</a>
+        </section>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <h2 class="card-title">Analyses effectuées</h2>
+                <p id="total-analyses">0</p>
+            </div>
+            <div class="dashboard-card">
+                <h2 class="card-title">Dernière analyse</h2>
+                <p id="last-analysis-date">Aucune analyse</p>
+            </div>
+            <div class="dashboard-card">
+                <h2 class="card-title">Taux moyen de violence</h2>
+                <p id="average-violence">0%</p>
+            </div>
+        </div>
+
+        <section class="dashboard-card recent-analyses">
+            <h2 class="card-title">Analyses récentes</h2>
+            <div id="analyses-list">
+                <div class="analysis-item">
+                    <div>
+                        <div class="analysis-date">Aucune analyse récente</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Récupérer les informations utilisateur depuis la session
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/user-data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.user) {
+                        document.getElementById('user-fullname').textContent = data.user.fullName;
+                        const initials = data.user.fullName.split(' ').map(name => name[0]).join('').toUpperCase();
+                        document.getElementById('user-avatar').textContent = initials;
+                    }
+                });
+
+            // Gérer la déconnexion
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                fetch('/logout', { method: 'GET' })
+                    .then(() => window.location.href = '/');
+            });
+        });
+    </script>
+</body>
+</html>

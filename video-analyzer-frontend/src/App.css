@@ -1,0 +1,152 @@
+/* App.css */
+
+/* Root variables for consistent theming */
+:root {
+  --primary-purple: #6B46C1;
+  --primary-blue: #4299E1;
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --text-white: #F7FAFC;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* Global reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Background video styling */
+video {
+  filter: brightness(0.7); /* Slightly darken for contrast */
+  object-fit: cover;
+}
+
+/* Navbar custom styles */
+nav {
+  transition: all 0.3s ease;
+}
+nav:hover {
+  background: linear-gradient(to right, rgba(107, 70, 193, 0.9), rgba(66, 153, 225, 0.9));
+}
+
+/* Glassmorphism card for main content */
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+  border-radius: 1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.glass-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Input field enhancements */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.15);
+}
+input:focus {
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 10px var(--primary-purple);
+}
+
+/* Button animations */
+button {
+  position: relative;
+  overflow: hidden;
+}
+button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+}
+button:hover::after {
+  width: 200px;
+  height: 200px;
+}
+
+/* Result display styling */
+.result-container {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+/* Image (graph) styling */
+img {
+  border: 2px solid var(--glass-border);
+  border-radius: 0.5rem;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+img:hover {
+  transform: scale(1.02);
+}
+
+/* Modal styling */
+.modal {
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: var(--shadow);
+  max-width: 90%;
+  width: 400px;
+  animation: modalFade 0.3s ease;
+}
+@keyframes modalFade {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Overlay for modals */
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .glass-card {
+    padding: 1rem;
+  }
+  nav {
+    padding: 0 1rem;
+  }
+  .modal {
+    width: 95%;
+    padding: 1.5rem;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--primary-purple);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-blue);
+}

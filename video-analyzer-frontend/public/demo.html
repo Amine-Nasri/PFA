@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>violence-detection - Détection de violence intelligente</title>
+    <style>
+        /* Reset et polices */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;900&display=swap');
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --text-color: #333;
+            --light-gray: #f5f5f5;
+            --medium-gray: #e0e0e0;
+            --dark-gray: #95a5a6;
+            --overlay-color: rgba(44, 62, 80, 0.85);
+            --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --ease-out: cubic-bezier(0.165, 0.84, 0.44, 1);
+            --ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
+        }
+
+        body {
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-color: var(--light-gray);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInFromLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInFromRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Hero Section with Video Background */
+        .hero-section {
+            position: relative;
+            height: 100vh;
+            overflow: hidden;
+            opacity: 0;
+            animation: fadeIn 1s var(--ease-out) 0.2s forwards;
+        }
+
+        .video-background {
+            position: absolute;
+            top: 80%;
+            left: 80%;
+            transform: translate(-50%, -50%);
+            width: auto;
+            height: auto;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .video-background video {
+            min-width: 100%;
+            min-height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.1);
+            z-index: 0;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 2rem;
+            color: white;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeIn 0.8s var(--ease-out) 0.4s forwards;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin-bottom: 2.5rem;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeIn 0.8s var(--ease-out) 0.6s forwards;
+        }
+
+        .hero-content .btn {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeIn 0.8s var(--ease-out) 0.8s forwards;
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            transition: var(--transition);
+            transform: translateY(-100%);
+            animation: slideInFromTop 0.6s var(--ease-out) forwards;
+        }
+
+        @keyframes slideInFromTop {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+
+        .navbar.scrolled {
+            padding: 1rem 5%;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-family: 'Montserrat', sans-serif;
+            transition: var(--transition);
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+        }
+
+        .logo span {
+            color: var(--accent-color);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin-left: 2.5rem;
+            position: relative;
+        }
+
+        .nav-links a {
+            color: var(--dark-color);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: var(--transition);
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--accent-color);
+            transition: var(--transition);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-color);
+        }
+
+        .auth-buttons .btn {
+            margin-left: 1rem;
+            transition: var(--transition);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.6rem 1.5rem;
+            border-radius: 30px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+
+        .btn:focus:not(:active)::after {
+            animation: ripple 1s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+
+        .btn-outline {
+            border: 2px solid var(--accent-color);
+            color: var(--accent-color);
+            background: transparent;
+        }
+
+        .btn-outline:hover {
+            background: var(--accent-color);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-solid {
+            border: 2px solid var(--accent-color);
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .btn-solid:hover {
+            background: transparent;
+            color: var(--accent-color);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        /* Main content */
+        .main-content {
+            padding: 5rem 5% 3rem;
+            background-color: white;
+        }
+
+        /* Detection section */
+        .detection-section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 3rem;
+            margin: 2rem auto;
+            max-width: 1200px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--medium-gray);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeIn 0.8s var(--ease-out) 0.8s forwards;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: var(--accent-color);
+            border-radius: 3px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: var(--dark-gray);
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .tab-btn {
+            padding: 0.8rem 2rem;
+            background: transparent;
+            border: none;
+            color: var(--dark-gray);
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+            font-size: 1rem;
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--accent-color);
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: var(--accent-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--medium-gray);
+            background-color: white;
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .input-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .file-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            border: 2px dashed var(--medium-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            background-color: var(--light-gray);
+        }
+
+        .file-upload:hover {
+            border-color: var(--accent-color);
+            background-color: rgba(52, 152, 219, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .file-upload i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-color);
+            transition: var(--transition);
+        }
+
+        .file-upload:hover i {
+            animation: pulse 1.5s infinite;
+        }
+
+        .file-upload p {
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .file-upload span {
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            transition: var(--transition);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        /* Results section */
+        .results {
+            margin-top: 2rem;
+            padding: 2rem;
+            background-color: var(--light-gray);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-color);
+            display: none;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .results h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .confidence-meter {
+            height: 10px;
+            background-color: var(--medium-gray);
+            border-radius: 5px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .confidence-level {
+            height: 100%;
+            background: linear-gradient(to right, #2ecc71, #f1c40f, #e74c3c);
+            width: 0%;
+            transition: width 1s ease;
+        }
+
+        /* Social Scan Section */
+        .social-scan-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            z-index: 3000;
+            padding: 2rem;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .social-scan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .social-scan-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .close-scan {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--dark-gray);
+            transition: var(--transition);
+        }
+
+        .close-scan:hover {
+            color: var(--accent-color);
+            transform: rotate(90deg);
+        }
+
+        .social-scan-options {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .social-scan-btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            background-color: var(--light-gray);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .social-scan-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .social-scan-btn.active {
+            background-color: var(--accent-color);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .social-scan-iframe {
+            width: 100%;
+            height: 70vh;
+            border: 1px solid var(--medium-gray);
+            border-radius: 8px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.6s var(--ease-out) forwards;
+        }
+
+        .scan-controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+            gap: 1rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.6s var(--ease-out) 0.2s forwards;
+        }
+
+        /* Auth modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--dark-gray);
+            transition: var(--transition);
+        }
+
+        .close-modal:hover {
+            color: var(--accent-color);
+            transform: rotate(90deg);
+        }
+
+        .modal-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            position: relative;
+        }
+
+        .modal-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background: var(--accent-color);
+            border-radius: 3px;
+        }
+
+        .social-auth {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .social-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--light-gray);
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            transition: var(--transition);
+            border: 1px solid var(--medium-gray);
+        }
+
+        .social-btn:hover {
+            transform: translateY(-3px);
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            color: var(--dark-gray);
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background-color: var(--medium-gray);
+        }
+
+        .divider span {
+            padding: 0 1rem;
+        }
+
+        .auth-form .input-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .forgot-password {
+            display: block;
+            text-align: right;
+            margin-bottom: 1.5rem;
+            color: var(--dark-gray);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .forgot-password:hover {
+            color: var(--accent-color);
+            text-decoration: underline;
+        }
+
+        .auth-submit {
+            width: 100%;
+            padding: 0.8rem;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+        .auth-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .switch-auth {
+            text-align: center;
+            color: var(--dark-gray);
+        }
+
+        .switch-auth a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .switch-auth a:hover {
+            text-decoration: underline;
+        }
+
+        /* QR Code Section */
+        .qr-section {
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .qr-code {
+            width: 150px;
+            height: 150px;
+            background-color: white;
+            padding: 10px;
+            border: 1px solid var(--medium-gray);
+            margin-bottom: 1rem;
+            transition: var(--transition);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .qr-instructions {
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+            margin-bottom: 1rem;
+        }
+
+        .social-qr-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .social-qr-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--light-gray);
+            color: var(--primary-color);
+            font-size: 1rem;
+            transition: var(--transition);
+            border: 1px solid var(--medium-gray);
+            cursor: pointer;
+        }
+
+        .social-qr-btn:hover {
+            transform: translateY(-3px);
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Features section */
+        .features-section {
+            padding: 5rem 5%;
+            background-color: var(--light-gray);
+            text-align: center;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .feature-card.animated {
+            animation: fadeIn 0.6s var(--ease-out) forwards;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px) !important;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1);
+            animation: pulse 1.5s infinite;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .feature-desc {
+            color: var(--dark-gray);
+            font-size: 0.95rem;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            text-align: left;
+        }
+
+        .footer-logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1rem;
+            font-family: 'Montserrat', sans-serif;
+            transition: var(--transition);
+        }
+
+        .footer-logo:hover {
+            transform: translateY(-2px);
+        }
+
+        .footer-logo span {
+            color: var(--accent-color);
+        }
+
+        .footer-about {
+            margin-bottom: 1.5rem;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .footer-links-container h3 {
+            color: white;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .footer-links-container h3::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background: var(--accent-color);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.8rem;
+            transition: var(--transition);
+        }
+
+        .footer-links li:hover {
+            transform: translateX(5px);
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .footer-links a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+
+        .copyright {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem 5%;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            .detection-section {
+                padding: 2rem 1.5rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab-btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .modal-content {
+                padding: 2rem 1.5rem;
+                margin: 0 1rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="#" class="logo">Violence<span>detection</span></a>
+        <ul class="nav-links">
+            <li><a href="#">Accueil</a></li>
+            <li><a href="#detection">Détection</a></li>
+            <li><a href="#features">Fonctionnalités</a></li>
+            <li><a href="#">À propos</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+        <div class="auth-buttons">
+            <a href="#" class="btn btn-outline" id="login-btn">Connexion</a>
+            <a href="#" class="btn btn-solid" id="register-btn">Inscription</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section with Video Background -->
+    <section class="hero-section">
+        <div class="video-background">
+            <video autoplay muted loop id="bg-video">
+                <source src="8428313-uhd_3840_2160_25fps (1).mp4" type="video/mp4">
+            </video>
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">Détection intelligente de contenu violent</h1>
+            <p class="hero-subtitle">Une solution professionnelle pour analyser et identifier les contenus violents dans les vidéos et textes</p>
+            <a href="#detection" class="btn btn-solid">Commencer l'analyse</a>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Detection Section -->
+        <section class="detection-section" id="detection">
+            <h2 class="section-title">Analyser du contenu</h2>
+            <p class="section-subtitle">Choisissez votre méthode d'analyse préférée pour détecter les contenus violents</p>
+            
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="video-url">URL Vidéo</button>
+                <button class="tab-btn" data-tab="video-upload">Upload Vidéo</button>
+                <button class="tab-btn" data-tab="text-analysis">Analyse de Texte</button>
+                <button class="tab-btn" data-tab="social-scan" id="social-scan-tab">Scan Réseaux Sociaux</button>
+            </div>
+            
+            <div class="tab-content active" id="video-url-tab">
+                <div class="input-group">
+                    <label for="video-url">URL de la vidéo (YouTube, Vimeo, etc.)</label>
+                    <input type="text" id="video-url" placeholder="https://example.com/video">
+                </div>
+                <button class="btn btn-solid submit-btn">Analyser</button>
+            </div>
+            
+            <div class="tab-content" id="video-upload-tab">
+                <div class="file-upload">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Glissez-déposez votre fichier vidéo ici</p>
+                    <span>ou</span>
+                    <input type="file" id="video-upload" accept="video/*" style="display: none;">
+                    <label for="video-upload" class="btn btn-outline">Sélectionner un fichier</label>
+                </div>
+                <button class="btn btn-solid submit-btn">Analyser</button>
+            </div>
+            
+            <div class="tab-content" id="text-analysis-tab">
+                <div class="input-group">
+                    <label for="text-content">Texte à analyser</label>
+                    <textarea id="text-content" placeholder="Entrez le texte que vous souhaitez analyser pour détecter un langage violent ou agressif..."></textarea>
+                </div>
+                <button class="btn btn-solid submit-btn">Analyser</button>
+            </div>
+            
+            <div class="tab-content" id="social-scan-tab">
+                <div class="qr-section">
+                    <div class="qr-container">
+                        <div class="qr-code">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://votresite.com/auth/social" alt="QR Code de connexion">
+                        </div>
+                        <p class="qr-instructions">Scannez ce QR code avec votre appareil mobile pour analyser directement depuis les réseaux sociaux</p>
+                    </div>
+                    
+                    <div class="social-qr-buttons">
+                        <button class="social-qr-btn" data-social="facebook"><i class="fab fa-facebook-f"></i></button>
+                        <button class="social-qr-btn" data-social="instagram"><i class="fab fa-instagram"></i></button>
+                        <button class="social-qr-btn" data-social="twitter"><i class="fab fa-twitter"></i></button>
+                        <button class="social-qr-btn" data-social="youtube"><i class="fab fa-youtube"></i></button>
+                    </div>
+                    
+                    <button class="btn btn-solid" id="direct-scan-btn" style="margin-top: 1.5rem;">Scanner directement depuis mon compte</button>
+                </div>
+            </div>
+            
+            <div class="results" id="results">
+                <h3>Résultats de l'analyse</h3>
+                <p>Probabilité de contenu violent: <span id="violence-percentage">0%</span></p>
+                <div class="confidence-meter">
+                    <div class="confidence-level" id="confidence-level"></div>
+                </div>
+                <p id="result-message">Aucune analyse effectuée pour le moment.</p>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features-section" id="features">
+            <h2 class="section-title">Nos Fonctionnalités</h2>
+            <p class="section-subtitle">Découvrez les capacités avancées de notre plateforme de détection</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <h3 class="feature-title">Analyse vidéo</h3>
+                    <p class="feature-desc">Détection précise des scènes violentes dans les vidéos avec marquage des moments clés.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-language"></i>
+                    </div>
+                    <h3 class="feature-title">Analyse textuelle</h3>
+                    <p class="feature-desc">Identification des discours haineux et langage violent dans les textes et transcriptions.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3 class="feature-title">Rapports détaillés</h3>
+                    <p class="feature-desc">Génération automatique de rapports avec statistiques et analyses approfondies.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-share-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Scan Réseaux Sociaux</h3>
+                    <p class="feature-desc">Analyse directe des contenus depuis Facebook, Instagram, Twitter et autres plateformes.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Social Scan Container -->
+    <div class="social-scan-container" id="social-scan-container">
+        <div class="social-scan-header">
+            <h2 class="social-scan-title">Scanner depuis les réseaux sociaux</h2>
+            <span class="close-scan" id="close-scan">&times;</span>
+        </div>
+        
+        <div class="social-scan-options">
+            <button class="social-scan-btn active" data-social="facebook">Facebook</button>
+            <button class="social-scan-btn" data-social="instagram">Instagram</button>
+            <button class="social-scan-btn" data-social="twitter">Twitter</button>
+            <button class="social-scan-btn" data-social="youtube">YouTube</button>
+        </div>
+        
+        <iframe class="social-scan-iframe" id="social-scan-iframe" src="about:blank" frameborder="0"></iframe>
+        
+        <div class="scan-controls">
+            <button class="btn btn-outline" id="back-to-options">Changer de réseau</button>
+            <button class="btn btn-solid" id="analyze-social-content">Analyser ce contenu</button>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title">Connexion</h2>
+            
+            <div class="social-auth">
+                <a href="https://accounts.google.com/o/oauth2/auth?client_id=VOTRE_ID_CLIENT_GOOGLE&redirect_uri=VOTRE_REDIRECT_URI&scope=email%20profile&response_type=code" class="social-btn"><i class="fab fa-google"></i></a>
+                <a href="https://www.facebook.com/v12.0/dialog/oauth?client_id=VOTRE_ID_APP_FACEBOOK&redirect_uri=VOTRE_REDIRECT_URI&scope=email" class="social-btn"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://twitter.com/i/oauth2/authorize?response_type=code&client_id=VOTRE_ID_CLIENT_TWITTER&redirect_uri=VOTRE_REDIRECT_URI&scope=users.read%20tweet.read&state=state&code_challenge=challenge&code_challenge_method=plain" class="social-btn"><i class="fab fa-twitter"></i></a>
+            </div>
+            
+            <div class="divider">
+                <span>ou</span>
+            </div>
+
+            <div class="qr-section">
+                <div class="qr-container">
+                    <div class="qr-code">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://votresite.com/auth/social" alt="QR Code de connexion">
+                    </div>
+                    <p class="qr-instructions">Scannez ce QR code avec votre appareil mobile pour vous connecter via les réseaux sociaux</p>
+                </div>
+            </div>
+            
+            <div class="divider">
+                <span>ou</span>
+            </div>
+            
+            <form class="auth-form">
+                <div class="input-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="votre@email.com" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="login-password">Mot de passe</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                
+                <a href="#" class="forgot-password">Mot de passe oublié?</a>
+                
+                <button type="submit" class="btn btn-solid auth-submit">Se connecter</button>
+                
+                <p class="switch-auth">Pas encore de compte? <a href="#" id="switch-to-register">S'inscrire</a></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal" id="register-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title">Inscription</h2>
+            
+            <div class="social-auth">
+                <a href="https://accounts.google.com/o/oauth2/auth?client_id=VOTRE_ID_CLIENT_GOOGLE&redirect_uri=VOTRE_REDIRECT_URI&scope=email%20profile&response_type=code" class="social-btn"><i class="fab fa-google"></i></a>
+                <a href="https://www.facebook.com/v12.0/dialog/oauth?client_id=VOTRE_ID_APP_FACEBOOK&redirect_uri=VOTRE_REDIRECT_URI&scope=email" class="social-btn"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://twitter.com/i/oauth2/authorize?response_type=code&client_id=VOTRE_ID_CLIENT_TWITTER&redirect_uri=VOTRE_REDIRECT_URI&scope=users.read%20tweet.read&state=state&code_challenge=challenge&code_challenge_method=plain" class="social-btn"><i class="fab fa-twitter"></i></a>
+            </div>
+            
+            <div class="divider">
+                <span>ou</span>
+            </div>
+            
+            <div class="qr-section">
+                <div class="qr-container">
+                    <div class="qr-code">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://votresite.com/auth/social" alt="QR Code d'inscription">
+                    </div>
+                    <p class="qr-instructions">Scannez ce QR code avec votre appareil mobile pour vous inscrire via les réseaux sociaux</p>
+                </div>
+            </div>
+            
+            <div class="divider">
+                <span>ou</span>
+            </div>
+            
+            <form class="auth-form">
+                <div class="input-group">
+                    <label for="register-name">Nom complet</label>
+                    <input type="text" id="register-name" placeholder="Jean Dupont" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" placeholder="votre@email.com" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="register-password">Mot de passe</label>
+                    <input type="password" id="register-password" placeholder="••••••••" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="register-confirm">Confirmer le mot de passe</label>
+                    <input type="password" id="register-confirm" placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" class="btn btn-solid auth-submit">S'inscrire</button>
+                
+                <p class="switch-auth">Déjà un compte? <a href="#" id="switch-to-login">Se connecter</a></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-about">
+                <div class="footer-logo">Violence<span>Detection</span></div>
+                <p class="footer-about">Une solution professionnelle pour la détection de contenus violents dans les médias numériques.</p>
+            </div>
+
+            <div class="footer-links-container">
+                <h3>Liens rapides</h3>
+                <ul class="footer-links">
+                    <li><a href="#">Accueil</a></li>
+                    <li><a href="#detection">Détection</a></li>
+                    <li><a href="#features">Fonctionnalités</a></li>
+                    <li><a href="#">À propos</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-links-container">
+                <h3>Légal</h3>
+                <ul class="footer-links">
+                    <li><a href="#">Conditions d'utilisation</a></li>
+                    <li><a href="#">Politique de confidentialité</a></li>
+                    <li><a href="#">Mentions légales</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-links-container">
+                <h3>Contact</h3>
+                <ul class="footer-links">
+                    <li><a href="mailto:contact@safevision.com">contact@esprit@gmail.com</a></li>
+                    <li><a href="tel:+33123456789">+216123456789</a></li>
+                    <li><a href="#">Support technique</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="copyright">
+            © 2026.esprit monastir Tous droits réservés.
+        </div>
+    </footer>
+
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Tab functionality
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+
+                // Remove active class from all buttons and contents
+                tabBtns.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+
+                // Add active class to clicked button and corresponding content
+                btn.classList.add('active');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+
+        // Modal functionality
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const loginModal = document.getElementById('login-modal');
+        const registerModal = document.getElementById('register-modal');
+        const closeModalBtns = document.querySelectorAll('.close-modal');
+        const switchToRegister = document.getElementById('switch-to-register');
+        const switchToLogin = document.getElementById('switch-to-login');
+
+        loginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        });
+
+        registerBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            registerModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        });
+
+        closeModalBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                loginModal.classList.remove('show');
+                registerModal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+            });
+        });
+
+        switchToRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginModal.classList.remove('show');
+            registerModal.classList.add('show');
+        });
+
+        switchToLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            registerModal.classList.remove('show');
+            loginModal.classList.add('show');
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === loginModal) {
+                loginModal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+            }
+            if (e.target === registerModal) {
+                registerModal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+            }
+        });
+
+        // File upload display
+        const fileUpload = document.getElementById('video-upload');
+        const fileUploadLabel = document.querySelector('.file-upload');
+
+        fileUpload.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                fileUploadLabel.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    <p>${this.files[0].name}</p>
+                    <span>${(this.files[0].size / (1024 * 1024)).toFixed(2)} MB</span>
+                    <button class="btn btn-outline">Changer de fichier</button>
+                `;
+            }
+        });
+
+        // Simulate analysis results
+        // Simulate analysis results
+        const submitBtns = document.querySelectorAll('.submit-btn');
+        const resultsSection = document.getElementById('results');
+        const violencePercentage = document.getElementById('violence-percentage');
+        const confidenceLevel = document.getElementById('confidence-level');
+        const resultMessage = document.getElementById('result-message');
+
+        submitBtns.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+
+        const videoUrl = document.getElementById('video-url').value;
+        if (!videoUrl) {
+            alert('Veuillez entrer une URL YouTube valide');
+            return;
+        }
+
+        // État de chargement
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse en cours...';
+        btn.disabled = true;
+        resultsSection.style.display = 'none';
+
+        try {
+            const formData = new URLSearchParams();
+            formData.append('video_url', videoUrl);
+
+            const response = await fetch('http://localhost:8000/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Erreur inconnue');
+            }
+
+            // Affichage des résultats
+            const percentage = Math.round(data.average_score * 100);
+            violencePercentage.textContent = `${percentage}%`;
+            confidenceLevel.style.width = `${percentage}%`;
+
+            // Message détaillé
+            let message = `
+                <strong>Statut:</strong> ${data.status || 'Non disponible'}<br>
+                <strong>Frames analysées:</strong> ${data.frames_analyzed || '0'}
+            `;
+
+            // Graphique
+            if (data.graph_url) {
+                message += `<br><br><img src="http://localhost:8000${data.graph_url}" 
+                             alt="Graphique d'analyse" 
+                             style="max-width:100%; margin-top:20px; border-radius:8px;">`;
+            }
+
+            resultMessage.innerHTML = message;
+            resultsSection.style.display = 'block';
+
+        } catch (error) {
+            resultMessage.innerHTML = `
+                <div style="color:#e74c3c;">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    Erreur: ${error.message}
+                </div>
+            `;
+            resultsSection.style.display = 'block';
+        } finally {
+            btn.innerHTML = 'Analyser';
+            btn.disabled = false;
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+});
+        // Social Scan functionality
+        const socialScanContainer = document.getElementById('social-scan-container');
+        const socialScanOptions = document.querySelectorAll('.social-scan-btn');
+        const socialScanIframe = document.getElementById('social-scan-iframe');
+        const closeScanBtn = document.getElementById('close-scan');
+        const backToOptionsBtn = document.getElementById('back-to-options');
+        const analyzeSocialContentBtn = document.getElementById('analyze-social-content');
+        const directScanBtn = document.getElementById('direct-scan-btn');
+
+        directScanBtn.addEventListener('click', () => {
+            socialScanContainer.style.display = 'flex';
+        });
+
+        closeScanBtn.addEventListener('click', () => {
+            socialScanContainer.style.display = 'none';
+        });
+
+        backToOptionsBtn.addEventListener('click', () => {
+            document.querySelectorAll('.social-scan-btn').forEach(btn => btn.classList.remove('active'));
+            socialScanIframe.src = 'about:blank';
+            document.querySelector('.social-scan-options').style.display = 'flex';
+            document.querySelector('.scan-controls').style.display = 'none';
+        });
+
+        socialScanOptions.forEach(btn => {
+            btn.addEventListener('click', () => {
+                socialScanOptions.forEach(btn => btn.classList.remove('active'));
+                btn.classList.add('active');
+                const socialPlatform = btn.getAttribute('data-social');
+                socialScanIframe.src = `https://www.${socialPlatform}.com`;
+                document.querySelector('.social-scan-options').style.display = 'none';
+                document.querySelector('.scan-controls').style.display = 'flex';
+            });
+        });
+
+        analyzeSocialContentBtn.addEventListener('click', () => {
+            // Simulate analysis results
+            resultsSection.style.display = 'block';
+            const randomPercentage = Math.floor(Math.random() * 100);
+            violencePercentage.textContent = `${randomPercentage}%`;
+            confidenceLevel.style.width = `${randomPercentage}%`;
+
+            if (randomPercentage > 70) {
+                resultMessage.textContent = "Contenu très probablement violent. Nous recommandons de ne pas partager ce contenu.";
+            } else if (randomPercentage > 30) {
+                resultMessage.textContent = "Certains éléments pourraient être considérés comme violents. Vérifiez le contenu avant de partager.";
+            } else {
+                resultMessage.textContent = "Aucun contenu violent détecté. Le contenu semble sûr.";
+            }
+
+            // Scroll to results
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // Video background start at 11 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            var video = document.getElementById('bg-video');
+            video.currentTime = 11; // Démarre la vidéo à 11 secondes
+            video.play(); // Démarre la lecture de la vidéo
+            
+            // Animate feature cards on scroll
+            const featureCards = document.querySelectorAll('.feature-card');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.classList.add('animated');
+                        }, index * 200);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            featureCards.forEach(card => {
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>

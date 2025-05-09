@@ -1,0 +1,4 @@
+flask==2.3.3
+opencv-python==4.9.0.80
+onnxruntime==1.21.1
+matplotlib==3.8.4
